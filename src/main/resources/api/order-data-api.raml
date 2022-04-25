@@ -1,0 +1,138 @@
+#%RAML 1.0
+types:
+  Address:
+    description: Address data type
+    example:
+      strict: true
+      value:
+        street: 44 Max Av
+        city: Raleigh
+        postalCode: "27513"
+        state: NC
+        country: USA
+    properties:
+      street?:
+        example: Example
+        type: string
+      city?:
+        example: Example
+        type: string
+      postalCode?:
+        example: Example
+        type: string
+      state?:
+        example: Example
+        type: string
+      country?:
+        example: Example
+        type: string
+  LineItems:
+    items:
+      type: LineItem
+      example:
+        strict: true
+        value:
+          productName: Anypoint Platform
+          quantity: "1"
+  Customer:
+    description: Customer data type
+    example:
+      strict: true
+      value:
+        id: Example
+        name: Example
+        address:
+          street: 44 Max Av
+          city: Raleigh
+          postalCode: "27513"
+          state: NC
+          country: USA
+    properties:
+      id?:
+        example: Example
+        type: string
+      name?:
+        example: Example
+        type: string
+      address?:
+        type: Address
+  Order:
+    description: Order data type
+    example:
+      strict: true
+      value:
+        orderId: Example
+        orderDate: Example
+        orderStatus: Example
+        customer:
+          id: Example
+          name: Example
+          address:
+            street: 44 Max Av
+            city: Raleigh
+            postalCode: "27513"
+            state: NC
+            country: USA
+        items:
+          -
+            productName: Anypoint Platform
+            quantity: "1"
+    properties:
+      orderId?:
+        example: Example
+        type: string
+      orderDate?:
+        example: Example
+        type: string
+      orderStatus?:
+        example: Example
+        type: string
+      customer?:
+        type: Customer
+      items?:
+        type: LineItems
+        items:
+          type: LineItem
+  LineItem:
+    description: Order Line Item type
+    example:
+      strict: true
+      value:
+        productName: Anypoint Platform
+        quantity: "1"
+    properties:
+      productName?:
+        example: Example
+        type: string
+      quantity?:
+        example: Example
+        type: string
+title: Order Data API
+baseUri: api.samplebaseuri.com
+description: REST API to Create, Read, Update and Delete Order Data in datawarehouse
+mediaType:
+  - application/json
+protocols:
+  - HTTP
+/order:
+  post:
+    displayName: Create new order
+    body:
+      application/json:
+        type: any
+    responses:
+      "201":
+        body:
+          example: Example
+          type: string
+/order/{id}:
+  get:
+    displayName: Get order by id
+    responses:
+      "200":
+        body:
+          type: Order
+  uriParameters:
+    id:
+      example: Example
+      type: string

@@ -1,0 +1,22 @@
+{
+  "orderId": "Example",
+  "orderDate": "Example",
+  "orderStatus": "Example",
+  "customer": {
+    "id": "Example",
+    "name": "Example",
+    "address": {
+      "street": "44 Max Av",
+      "city": "Raleigh",
+      "postalCode": "27513",
+      "state": "NC",
+      "country": "USA"
+    }
+  },
+  "items": [
+    {
+      "productName": "Anypoint Platform",
+      "quantity": 1
+    }
+  ]
+}

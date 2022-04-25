@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:snowflake="http://www.mulesoft.org/schema/mule/snowflake" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/snowflake http://www.mulesoft.org/schema/mule/snowflake/current/mule-snowflake.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+    <http:listener-config name="httpListenerConfig">
+        <http:listener-connection host="${http.host}" port="${http.port}" />
+    </http:listener-config>
+    <apikit:config name="order-data-api-config" api="order-data-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <configuration-properties doc:name="Configuration properties" doc:id="829f5a95-6b8d-4c5d-b11a-8535dbaad981" file="config.yaml" />
+	<snowflake:snowflake-config name="Snowflake_Config" doc:name="Snowflake Config" doc:id="433ef495-9ff0-43c0-aaed-947b4f0e58e5" >
+		<snowflake:snowflake-connection accountName="${snowflake.account-name}" warehouse="${snowflake.warehouse}" database="${snowflake.database}" schema="${snowflake.schema}" user="${snowflake.user}" password="${snowflake.password}" />
+	</snowflake:snowflake-config>
+	<flow name="order-data-api-main">
+        <http:listener config-ref="httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="order-data-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="order-data-api-console">
+        <http:listener config-ref="httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="order-data-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\order\(id):order-data-api-config">
+        <logger level="INFO" doc:name="Logger" doc:id="15fcd41f-dccd-4689-8f5d-309627d36b9d" message="order query received"/>
+		<set-variable value="#[attributes.uriParams.id]" doc:name="Save orderID" doc:id="2c0e9407-d6ac-4c1f-9282-d400d46c8e7c" variableName="orderID"/>
+		<snowflake:select doc:name="Search Order in DW" doc:id="2a38281e-d7c9-4da4-b4da-20e788997ef7" config-ref="Snowflake_Config">
+			<snowflake:sql ><![CDATA[SELECT * from DWH_FACT_SALES where CHECK_NUMBER = :orderID
+LIMIT 1]]></snowflake:sql>
+			<snowflake:input-parameters ><![CDATA[#[orderID : vars.orderID]]]></snowflake:input-parameters>
+		</snowflake:select>
+		<choice doc:name="Choice" doc:id="3f9b5dc7-10eb-4132-9183-2819155d770c" >
+			<when expression="#[isEmpty(payload.SHACK_ID)]">
+				<ee:transform doc:name="Order Not Found" doc:id="30adb9f6-3d64-46ac-98fe-060a0176cc9f">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	 Message : p("resp.failure")
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Send Order Details" doc:id="5f610773-b8fd-4bc1-b132-0fed18c9bf17">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	orderNumber: payload.CHECK_NUMBER[0],
+	orderDate: payload.SALE_TS[0] as String,
+	orderDetails: {
+		orderChannel: payload.ORDER_MODE_CATEGORY[0],
+		orderType: payload.ORDER_MODE_NAME[0],
+		total: payload.AMOUNT_NET[0]
+	},
+	guestDetails: {
+		id: payload.SHACK_ID[0],
+		name: payload.GUEST_GK[0],
+		frequency: payload.GUEST_FREQUENCY_STATUS[0]
+	}
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+			</otherwise>
+		</choice>
+    </flow>
+	<flow name="post:\order:order-data-api-config">
+		<logger level="INFO" doc:name="Logger" doc:id="766ade29-f968-4856-8f62-c22d0b8a3a39" message="new order received"/>
+		<ee:transform doc:id="50ea7ac3-e023-45e3-995a-b41ac71ea11b" doc:name="Create order data">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	orderNumber: payload.orderNumber as Number,
+	orderDate: now(),
+	storeNumber: payload.storeNumber as Number,
+	orderChannel: payload.orderDetails.orderChannel,
+	orderType: payload.orderDetails.orderType,
+	total: payload.orderDetails.total as Number,
+	id: payload.guestDetails.id as Number,
+	name: payload.guestDetails.name,
+	frequency: payload.guestDetails.frequency
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<snowflake:insert doc:name="Send new order to DW" doc:id="9ec02908-3659-44d3-b586-b8b05348a31c" config-ref="Snowflake_Config">
+			<snowflake:sql ><![CDATA[INSERT INTO DWH_FACT_SALES (CHECK_NUMBER,SALE_TS,STORE_ID,ORDER_MODE_CATEGORY,ORDER_MODE_NAME,AMOUNT_NET,SHACK_ID,GUEST_GK,GUEST_FREQUENCY_STATUS)
+values(:orderNumber,:orderDate,:storeNumber,:orderChannel,:orderType,:total,:id,:name,:frequency);]]></snowflake:sql>
+			<snowflake:input-parameters ><![CDATA[#[{
+orderNumber:payload.orderNumber,
+ orderDate:payload.orderDate,
+storeNumber:payload.storeNumber,
+orderChannel:payload.orderChannel,
+orderType:payload.orderType,
+total:payload.total,
+id:payload.id,
+name:payload.name,
+frequency:payload.frequency
+}]]]></snowflake:input-parameters>
+		</snowflake:insert>
+		<ee:transform doc:name="Send response" doc:id="48742af0-3580-4f4b-824d-c1c15a56c627" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: p("resp.create")
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+</mule>

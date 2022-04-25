@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="Order" format="json">
+      <types:shape format="weave" example="snowflakeOrderExample.json"><![CDATA[%dw 2.0
+
+type Order = {|
+  orderNumber: Number {"typeId": "int"}, 
+  orderDate: String, 
+  storeNumber: Number {"typeId": "int"}, 
+  orderChannel: String, 
+  orderType: String, 
+  subtotal: Number {"typeId": "int"}, 
+  discount: Number {"typeId": "int"}, 
+  tax: Number {"typeId": "double"}, 
+  total: Number {"typeId": "double"}, 
+  id: Number {"typeId": "int"}, 
+  name: String, 
+  frequency: String
+|} {"example": "{\\\"orderNumber\\\":9998,\\\"orderDate\\\":\\\"03232022\\\",\\\"storeNumber\\\":11,\\\"orderChannel\\\":\\\"App\\\",\\\"orderType\\\":\\\"Mobile\\\",\\\"subtotal\\\":20,\\\"discount\\\":5,\\\"tax\\\":0.9,\\\"total\\\":15.9,\\\"id\\\":99999,\\\"name\\\":\\\"Max Mule\\\",\\\"frequency\\\":\\\"New\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="OrderType" format="json">
+      <types:shape format="weave" example="OrderExample.json"><![CDATA[%dw 2.0
+
+type OrderType = {|
+  orderNumber: Number {"typeId": "int"}, 
+  orderDate: String, 
+  storeNumber: Number {"typeId": "int"}, 
+  orderDetails: {|
+    orderChannel: String, 
+    orderType: String, 
+    total: Number {"typeId": "int"}
+  |}, 
+  guestDetails: {|
+    id: Number {"typeId": "int"}, 
+    name: String, 
+    frequency: String
+  |}
+|} {"example": "{\\\"orderNumber\\\":220011,\\\"orderDate\\\":\\\"03232022\\\",\\\"storeNumber\\\":11,\\\"orderDetails\\\":{\\\"orderChannel\\\":\\\"App\\\",\\\"orderType\\\":\\\"Mobile\\\",\\\"total\\\":25},\\\"guestDetails\\\":{\\\"id\\\":12466,\\\"name\\\":\\\"MM\\\",\\\"frequency\\\":\\\"New\\\"}}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#50ea7ac3-e023-45e3-995a-b41ac71ea11b">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="OrderType"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="Order"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#5f610773-b8fd-4bc1-b132-0fed18c9bf17">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="OrderType"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

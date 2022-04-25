@@ -1,0 +1,14 @@
+{
+    "orderNumber": 9998,
+    "orderDate": "03232022",
+    "storeNumber":11,
+    "orderChannel": "App",
+    "orderType": "Mobile",
+    "subtotal": 20,
+    "discount":5,
+    "tax":0.9,
+    "total":15.9,
+    "id":99999,
+    "name":"Max Mule",
+    "frequency":"New"
+}
